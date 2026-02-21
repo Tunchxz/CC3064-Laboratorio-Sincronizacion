@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dining Philosophers Monitor</title>
+    <style>
+        .philosopher { display: inline-block; margin: 10px; padding: 20px; border: 2px solid #000; border-radius: 50%; width: 80px; text-align: center; transition: 0.3s; }
+        .EATING { background-color: #ff4d4d; color: white; }
+        .THINKING { background-color: #4da6ff; color: white; }
+        .HUNGRY { background-color: #ffcc00; }
+    </style>
+</head>
+<body>
+    <h1>Estado de los Filósofos</h1>
+    <div id="table"></div>
+
+    <script>
+        function update() {
+            fetch('http://localhost:8080/status')
+                .then(res => res.json())
+                .then(data => {
+                    const container = document.getElementById('table');
+                    container.innerHTML = data.map((state, i) => 
+                        `<div class="philosopher ${state}">Filo ${i}<br>${state}</div>`
+                    ).join('');
+                });
+        }
+        setInterval(update, 500); // Actualiza cada medio segundo
+    </script>
+</body>
+</html>
