@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  dining-philosophers:
+    build: .
+    ports:
+      - "8080:8080"
+    container_name: dining-philosophers-backend
+    restart: unless-stopped
+    environment:
+      # Variables de entorno opcionales (si las necesitas en el futuro)
+      - LOG_LEVEL=info
+    # Healthcheck para verificar que el servidor está respondiendo
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

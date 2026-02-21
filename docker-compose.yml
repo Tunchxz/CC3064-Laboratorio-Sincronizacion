@@ -1,7 +1,45 @@
-version: '3.8'
 services:
-  dining-api:
-    build: .
+  # Backend Go
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: philosophers-backend
     ports:
       - "8080:8080"
-    restart: always
+    environment:
+      - PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    networks:
+      - philosophers-network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: philosophers-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    restart: unless-stopped
+    networks:
+      - philosophers-network
+
+networks:
+  philosophers-network:
+    driver: bridge
+
+volumes:
+  # Si necesitamos persistencia en el futuro
+  backend-data:

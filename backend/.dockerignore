@@ -1,0 +1,36 @@
+# Git
+.git
+.gitignore
+
+# Documentación
+*.md
+!README.md
+
+# Binarios compilados
+dining_philosophers
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+*_test.go
+*.test
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
