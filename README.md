@@ -1,60 +1,128 @@
-# CC3064 - Laboratorio de Sincronización: Filósofos Comensales
+# Laboratorio de Sincronización: Dinning Philosophers
 
-**Equipo 10**  
-**Universidad del Valle de Guatemala**  
-**2024**
+Implementación del problema clásico de los Dinning Philosophers utilizando el patrón Monitor con sistema de prioridades para evitar inanición. El proyecto incluye un backend en Go que maneja la sincronización y lógica de simulación, junto con un frontend en React para visualización interactiva en tiempo real.
 
-Implementación del Problema de los Filósofos Comensales utilizando el patrón Monitor con sistema de prioridades para evitar inanición.
-
-## 📋 Descripción
-
-Este proyecto implementa la solución clásica al problema de los Filósofos Comensales usando:
-
-- **Backend en Go**: Monitor con variables de condición y sistema de prioridades
-- **Frontend en React**: Visualización en tiempo real de la simulación
-- **Docker**: Containerización para despliegue sencillo
-
-### Características Principales
-
-✅ **Monitor Pattern**: Sincronización con `sync.Mutex` y `sync.Cond`  
-✅ **Sistema de Prioridades**: Evita inanición usando fórmula `priority = eatCount[i] * 10000 - waitTime[i]/100`  
-✅ **API REST**: Endpoints `/start`, `/stop`, `/status`  
-✅ **Visualización Interactiva**: Interfaz web con disposición circular  
-✅ **Docker**: Configuración multi-stage para producción  
-
-## 🏗️ Arquitectura
+## Estructura del Proyecto
 
 ```
 .
-├── backend/
-│   ├── monitor/           # Implementación del Monitor
-│   ├── simulation/        # Lógica de simulación
-│   ├── handlers/          # HTTP handlers
-│   └── main.go           # Entry point
-├── frontend/
+├── backend/                      # Backend en Go
+│   ├── main.go                   # Punto de entrada del servidor
+│   ├── go.mod                    # Dependencias Go
+│   ├── Dockerfile                # Imagen Docker del backend
+│   ├── docker-compose.yml        # Configuración Docker local
+│   ├── handlers/
+│   │   └── handlers.go           # Endpoints /start, /stop, /status
+│   ├── middleware/
+│   │   └── cors.go               # Configuración CORS
+│   ├── monitor/
+│   │   └── dining_monitor.go     # Implementación del patrón Monitor
+│   └── simulation/
+│       └── simulation.go         # Gestión de filósofos con goroutines
+│
+├── frontend/                               # Frontend en React
 │   ├── src/
-│   │   ├── components/    # Componentes React
-│   │   ├── assets/        # Imágenes (EAT, HUNGRY, THINK)
-│   │   ├── App.jsx        # Componente principal
-│   │   └── App.css        # Estilos
-│   └── package.json
-├── docker-compose.yml     # Orquestación de servicios
-├── Dockerfile            # Build backend
-└── Makefile              # Comandos útiles
-
+│   │   ├── App.jsx                         # Componente principal
+│   │   ├── App.css                         # Estilos globales
+│   │   ├── main.jsx
+│   │   ├── components/
+│   │   │   ├── PhilosopherssCircle.jsx     # Visualización circular
+│   │   │   ├── SimulationControls.jsx      # Controles de simulación
+│   │   │   └── Stats.jsx                   # Estadísticas en tiempo real
+│   │   └── assets/
+│   ├── package.json                        # Dependencias npm
+│   ├── vite.config.js                      # Configuración Vite
+│   ├── Dockerfile                          # Imagen Docker del frontend
+│   └── nginx.conf
+│
+└── docker-compose.yml            # Orquestación de servicios completa
 ```
 
-## 🚀 Inicio Rápido
+## Funcionalidades
+
+### Backend (Go)
+
+- **Monitor con Sistema de Prioridades**: Implementación del patrón Monitor que gestiona la adquisición y liberación de tenedores de forma segura, con un sistema de prioridades basado en el tiempo de espera y número de veces que ha comido cada filósofo.
+
+- **API REST**:
+  - `POST/GET /start?n=<num>&duration=<sec>`: Inicia simulación con N filósofos (2-100) y duración en segundos (60-1200)
+  - `POST/GET /stop`: Detiene la simulación en ejecución
+  - `GET /status`: Obtiene estado actual de todos los filósofos y métricas
+  - `GET /health`: Health check del servicio
+
+- **Goroutines**: Cada filósofo se ejecuta en su propia goroutine con ciclo pensar-tomar tenedores-comer-soltar tenedores
+
+- **Logs Detallados**: Timestamps con microsegundos para análisis de concurrencia
+
+#### Arquitectura de Sincronización
+
+El sistema implementa el patrón Monitor para evitar condiciones de carrera y deadlocks:
+
+- **Mutex Global**: Protege el estado compartido de todos los filósofos
+- **Variables de Condición**: Una por filósofo para espera condicional
+- **Sistema de Prioridades**: 
+  - Prioridad = `eatCount[i] * 10000 - waitTime[i]/100`
+  - Mayor prioridad = menor oportunidad de comer (previene inanición)
+- **Test de Disponibilidad**: Verifica que ambos vecinos no estén comiendo
+- **Wake-up Explícito**: Notifica a filósofos vecinos cuando se liberan tenedores
+
+### Frontend (React + Vite)
+
+- **Visualización Circular**: Disposición circular de filósofos con sus estados (THINKING, HUNGRY, EATING)
+
+- **Controles Interactivos**: 
+  - Selector de número de filósofos
+  - Selector de duración
+  - Botones Start/Stop con validaciones
+
+- **Polling Automático**: Actualización del estado cada 500ms mediante peticiones al endpoint `/status`
+
+- **Estadísticas en Tiempo Real**:
+  - Estado de cada filósofo
+  - Tiempo de espera
+  - Número de veces que comió
+  - Prioridad actual
+
+- **Indicadores Visuales**: Colores y animaciones para representar estados
+
+## Requisitos Previos
+
+### Opción 1: Docker (Recomendado)
+- Docker 20.10 o superior
+- Docker Compose 2.0 o superior
+
+### Opción 2: Desarrollo Local
+- Go 1.23 o superior
+- Node.js 20.x o superior
+- npm 10.x o superior
+
+## Instrucciones de Ejecución
 
 ### Opción 1: Docker Compose (Recomendado)
 
+Esta es la forma más sencilla de ejecutar el proyecto completo:
+
 ```bash
-# Iniciar backend y frontend
+# Clonar el repositorio
+git clone https://github.com/Tunchxz/CC3064-Laboratorio-Sincronizacion
+cd CC3064-Laboratorio-Sincronizacion
+
+# Iniciar ambos servicios
 docker-compose up --build
 
-# Acceder a:
-# Backend: http://localhost:8080
-# Frontend: http://localhost:5173
+# La aplicación estará disponible en:
+# - Frontend: http://localhost:5173
+# - Backend API: http://localhost:8080
+```
+
+Para detener los servicios:
+
+```bash
+# Detener servicios
+docker-compose down
+
+# Detener y limpiar volúmenes
+docker-compose down -v
 ```
 
 ### Opción 2: Desarrollo Local
@@ -62,236 +130,51 @@ docker-compose up --build
 #### Backend
 
 ```bash
-# Instalar dependencias Go
+# Navegar al directorio backend
+cd backend
+
+# Instalar dependencias
 go mod download
 
-# Ejecutar backend
+# Ejecutar el servidor
 go run main.go
-# o
-make run
 
-# Backend disponible en http://localhost:8080
+# El backend estará disponible en http://localhost:8080
 ```
 
 #### Frontend
 
 ```bash
+# En otra terminal, navegar al directorio frontend
 cd frontend
 
 # Instalar dependencias
 npm install
 
-# Iniciar dev server
+# Iniciar el servidor de desarrollo
 npm run dev
 
-# Frontend disponible en http://localhost:5173
+# El frontend estará disponible en http://localhost:5173
 ```
 
-## 📊 API Endpoints
-
-### POST /start
-Inicia una simulación con parámetros.
-
-**Query Parameters:**
-- `n`: Número de filósofos (2-100)
-- `duration`: Duración en segundos (60-3600)
-
-**Ejemplo:**
-```bash
-curl -X POST "http://localhost:8080/start?n=5&duration=120"
-```
-
-**Respuesta:**
-```json
-{
-  "message": "Simulation started with 5 philosophers for 120 seconds"
-}
-```
-
-### POST /stop
-Detiene la simulación actual.
-
-```bash
-curl -X POST "http://localhost:8080/stop"
-```
-
-### GET /status
-Obtiene el estado actual de todos los filósofos.
-
-```bash
-curl http://localhost:8080/status
-```
-
-**Respuesta:**
-```json
-{
-  "running": true,
-  "n": 5,
-  "states": ["EATING", "THINKING", "HUNGRY", "THINKING", "EATING"],
-  "eatCount": [12, 8, 5, 10, 11],
-  "waitTime": [1500000000, 800000000, 2200000000, 900000000, 1100000000],
-  "priorities": [118500, 78000, 28000, 91000, 99000]
-}
-```
-
-## 🎯 Monitor & Prioridades
-
-### Implementación del Monitor
-
-El Monitor encapsula:
-- **Estado interno**: `state[]`, `eatCount[]`, `waitTime[]`
-- **Mutex**: Control de exclusión mutua
-- **Condition Variables**: `self[i]` para cada filósofo
-
-### Sistema de Prioridades
-
-```go
-priority = eatCount[i] * 10000 - waitTime[i]/100
-```
-
-**Menor número = Mayor prioridad**
-
-- Los filósofos que han comido menos tienen mayor prioridad
-- El tiempo de espera también afecta la prioridad
-- Garantiza progreso justo y evita inanición
-
-### Transiciones de Estado
-
-```
-THINKING → HUNGRY → EATING → THINKING
-```
-
-## 🎨 Frontend
-
-### Visualización Circular
-
-Los filósofos se muestran alrededor de una mesa circular con:
-- **Imágenes de estado**: PNG animados (THINKING, HUNGRY, EATING)
-- **Colores dinámicos**: Azul (THINKING), Amarillo (HUNGRY), Verde (EATING)
-- **Animaciones**: Pulse effects para cada estado
-- **Estadísticas**: eatCount y priority por filósofo
-
-### Panel de Estadísticas
-
-- Distribución de estados en tiempo real
-- Promedio de comidas y prioridades
-- Identificación del filósofo con más comidas
-- Filósofo con mayor prioridad actual
-
-## 🧪 Testing
-
-### Backend
-
-```bash
-# Ejecutar tests
-make test
-
-# Con coverage
-make test-coverage
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm run test
-```
-
-## 🔧 Desarrollo
-
-### Hot Reload
+### Opción 3: Docker Individual
 
 #### Backend
 ```bash
-# Instalar air (opcional)
-go install github.com/air-verse/air@latest
-
-# Ejecutar con hot reload
-air
-
-# o usar make
-make dev
+cd backend
+docker build -t philosopherss-backend .
+docker run -p 8080:8080 philosopherss-backend
 ```
 
 #### Frontend
 ```bash
 cd frontend
-npm run dev
-# El servidor de Vite tiene hot reload por defecto
+docker build -t philosopherss-frontend .
+docker run -p 5173:80 philosopherss-frontend
 ```
 
-### Linting
+## Equipo 10
 
-```bash
-# Backend
-make lint
-
-# Frontend
-cd frontend
-npm run lint
-```
-
-## 📖 Documentación Adicional
-
-- [Arquitectura del Backend](ARCHITECTURE.md)
-- [Guía de Docker](DOCKER.md)
-- [Frontend README](frontend/README.md)
-
-## 🐳 Docker
-
-### Build & Run
-
-```bash
-# Build imagen
-docker build -t dining-philosophers .
-
-# Run container
-docker run -p 8080:8080 dining-philosophers
-
-# Con docker-compose
-docker-compose up -d
-docker-compose logs -f
-docker-compose down
-```
-
-### Makefile Commands
-
-```bash
-make build          # Compilar binary
-make run           # Ejecutar localmente
-make docker-build  # Build imagen Docker
-make docker-run    # Run container
-make test          # Ejecutar tests
-make clean         # Limpiar artifacts
-make help          # Ver todos los comandos
-```
-
-## 🧩 Requisitos del Lab
-
-Este proyecto cumple con todos los requisitos del laboratorio:
-
-1. ✅ **Exclusión Mutua**: Implementada con `sync.Mutex`
-2. ✅ **Variables de Condición**: Usando `sync.Cond` nativas de Go
-3. ✅ **Monitor Pattern**: Encapsulación completa del estado
-4. ✅ **Prevención de Deadlock**: Lógica de `test()` asegura progreso
-5. ✅ **Mitigación de Inanición**: Sistema de prioridades basado en teoría
-6. ✅ **Sin librerías de alto nivel**: Solo primitivas básicas (`sync` package)
-7. ✅ **Logs detallados**: Timestamps en microsegundos
-8. ✅ **API RESTful**: Endpoints para control y monitoreo
-
-## 👥 Equipo 10
-
-- [Nombre] - [Carnet]
-- [Nombre] - [Carnet]
-- [Nombre] - [Carnet]
-
-## 📄 License
-
-Este proyecto es parte del curso CC3064 - Laboratorio de Sistemas Operativos.  
-Universidad del Valle de Guatemala - 2024
-
-## 🙏 Referencias
-
-- Dijkstra, E. W. (1971). "Hierarchical ordering of sequential processes"
-- Hoare, C. A. R. (1974). "Monitors: An operating system structuring concept"
-- Material del curso CC3064 - Slides sobre Monitors
+- Cristian Túnchez (231359)  
+- Javier Linares (231135)  
+- Estuardo Castro (23890)
