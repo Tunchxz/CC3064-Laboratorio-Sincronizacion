@@ -59,23 +59,23 @@ function Stats({ philosophers, stats }) {
 
   return (
     <div className="stats-panel">
-      <h2>📊 Estadísticas</h2>
+      <h2>Estadísticas</h2>
 
       <div className="stats-section">
         <h3>Distribución de Estados</h3>
         <div className="stats-grid">
           <div className="stat-card thinking">
-            <div className="stat-icon">💭</div>
+            <div className="stat-icon">T</div>
             <div className="stat-label">THINKING</div>
             <div className="stat-value">{stateDistribution.THINKING}</div>
           </div>
           <div className="stat-card hungry">
-            <div className="stat-icon">😋</div>
+            <div className="stat-icon">H</div>
             <div className="stat-label">HUNGRY</div>
             <div className="stat-value">{stateDistribution.HUNGRY}</div>
           </div>
           <div className="stat-card eating">
-            <div className="stat-icon">🍽️</div>
+            <div className="stat-icon">E</div>
             <div className="stat-label">EATING</div>
             <div className="stat-value">{stateDistribution.EATING}</div>
           </div>
@@ -102,7 +102,7 @@ function Stats({ philosophers, stats }) {
 
       {maxEater && (
         <div className="stats-section">
-          <h3>🏆 Destacados</h3>
+          <h3>Destacados</h3>
           <div className="stats-list">
             <div className="stat-item highlight">
               <span className="stat-label">Más Comidas:</span>
@@ -124,7 +124,7 @@ function Stats({ philosophers, stats }) {
 
       {stats && (
         <div className="stats-section">
-          <h3>⏱️ Tiempos</h3>
+          <h3>Tiempos</h3>
           <div className="stats-list">
             {stats.avgThinkTime && (
               <div className="stat-item">

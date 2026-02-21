@@ -113,8 +113,8 @@ function PhilosophersCircle({ philosophers }) {
                   {philosopher.state}
                 </div>
                 <div className="philosopher-stats">
-                  <div className="stat">🍽️ {philosopher.eatCount}</div>
-                  <div className="stat">⏱️ {philosopher.priority}</div>
+                  <div className="stat">{philosopher.eatCount}</div>
+                  <div className="stat">{philosopher.priority}</div>
                 </div>
               </div>
             </div>

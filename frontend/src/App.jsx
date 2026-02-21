@@ -24,6 +24,14 @@ function App() {
         const response = await fetch(`${API_URL}/status`);
         const data = await response.json();
         
+        // Detectar si la simulación terminó (solo si el campo running existe y es false)
+        if (data.running === false) {
+          setIsRunning(false);
+          clearInterval(interval);
+          console.log('[OK] Simulación terminada');
+          return;
+        }
+        
         if (data.states) {
           const philosophersData = data.states.map((state, index) => ({
             id: index,
@@ -36,7 +44,7 @@ function App() {
           setStats(data);
         }
       } catch (error) {
-        console.error('Error fetching status:', error);
+        console.error('[X] Error fetching status:', error);
       }
     }, 500); // Actualizar cada 500ms
 
@@ -56,8 +64,21 @@ function App() {
       );
       
       if (!response.ok) {
-        const data = await response.json().catch(() => ({ message: 'Unknown error' }));
-        alert(`Error: ${data.message || response.statusText}`);
+        // Intentar obtener el mensaje de error del backend
+        let errorMessage = 'Error desconocido';
+        const contentType = response.headers.get('content-type');
+        
+        if (contentType && contentType.includes('application/json')) {
+          // Si es JSON, parsear el mensaje
+          const data = await response.json().catch(() => ({}));
+          errorMessage = data.message || data.error || response.statusText;
+        } else {
+          // Si es texto plano, leer el texto directamente
+          errorMessage = await response.text().catch(() => response.statusText);
+        }
+        
+        alert(`Error: ${errorMessage}`);
+        console.error('[X] Error del backend:', errorMessage);
         return;
       }
       
@@ -73,8 +94,9 @@ function App() {
         priority: 0
       }));
       setPhilosophers(initialPhilosophers);
+      console.log('[OK] Simulación iniciada exitosamente');
     } catch (error) {
-      console.error('Error starting simulation:', error);
+      console.error('[X] Error starting simulation:', error);
       const errorMessage = error.message.includes('fetch') 
         ? 'No se puede conectar con el backend. Verifica:\n\n' +
           '1. El backend está corriendo en http://localhost:8080\n' +
@@ -90,15 +112,16 @@ function App() {
     try {
       await fetch(`${API_URL}/stop`, { method: 'POST' });
       setIsRunning(false);
+      console.log('[OK] Simulación detenida');
     } catch (error) {
-      console.error('Error stopping simulation:', error);
+      console.error('[X] Error stopping simulation:', error);
     }
   };
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🍴 Dining Philosophers Monitor</h1>
+        <h1>Dining Philosophers Monitor</h1>
         <p className="subtitle">Implementación con Monitor y Sistema de Prioridades</p>
       </header>
 

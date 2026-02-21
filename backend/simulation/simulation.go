@@ -94,6 +94,8 @@ func (s *Simulation) IsRunning() bool {
 // WriteStatus escribe el estado actual de la simulación en formato JSON
 func (s *Simulation) WriteStatus(w http.ResponseWriter) {
 	data := s.Monitor.Snapshot()
+	// Agregar el campo running al snapshot
+	data["running"] = s.running
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }

@@ -4,31 +4,6 @@ const API_URL = 'http://localhost:8080';
 
 function SimulationControls({ config, setConfig, isRunning, onStart, onStop }) {
   const [errors, setErrors] = useState({});
-  const [connectionStatus, setConnectionStatus] = useState(null);
-  const [testingConnection, setTestingConnection] = useState(false);
-
-  const testConnection = async () => {
-    setTestingConnection(true);
-    setConnectionStatus(null);
-    
-    try {
-      const response = await fetch(`${API_URL}/health`, { 
-        method: 'GET',
-        signal: AbortSignal.timeout(5000) // 5 segundos timeout
-      });
-      
-      if (response.ok) {
-        setConnectionStatus('✅ Conexión exitosa con el backend');
-      } else {
-        setConnectionStatus(`⚠️ Backend responde pero con error: ${response.status}`);
-      }
-    } catch (error) {
-      console.error('Connection test failed:', error);
-      setConnectionStatus('❌ No se puede conectar al backend en http://localhost:8080');
-    } finally {
-      setTestingConnection(false);
-    }
-  };
 
   const validateConfig = () => {
     const newErrors = {};
@@ -108,7 +83,7 @@ function SimulationControls({ config, setConfig, isRunning, onStart, onStop }) {
           className={errors.duration ? 'error' : ''}
         />
         {errors.duration && <span className="error-message">{errors.duration}</span>}
-        <small>Entre 60 y 3600 segundos (1 hora)</small>
+        <small>Entre 60 y 1200 segundos (20 minutos)</small>
       </div>
 
       <div className="control-buttons">
@@ -117,7 +92,7 @@ function SimulationControls({ config, setConfig, isRunning, onStart, onStop }) {
           disabled={isRunning}
           className="btn btn-start"
         >
-          {isRunning ? '▶️ En Ejecución...' : '▶️ Iniciar Simulación'}
+          {isRunning ? 'En Ejecución...' : 'Iniciar Simulación'}
         </button>
         
         <button
@@ -125,31 +100,17 @@ function SimulationControls({ config, setConfig, isRunning, onStart, onStop }) {
           disabled={!isRunning}
           className="btn btn-stop"
         >
-          ⏹️ Detener Simulación
-        </button>
-
-        <button
-          onClick={testConnection}
-          disabled={testingConnection || isRunning}
-          className="btn btn-test"
-        >
-          {testingConnection ? '🔄 Probando...' : '🔌 Probar Conexión'}
+          Detener Simulación
         </button>
       </div>
 
-      {connectionStatus && (
-        <div className={`connection-status ${connectionStatus.includes('✅') ? 'success' : 'error'}`}>
-          {connectionStatus}
-        </div>
-      )}
-
       <div className="info-box">
-        <h3>ℹ️ Información</h3>
+        <h3>Información</h3>
         <ul>
           <li><strong>THINKING:</strong> El filósofo está pensando</li>
           <li><strong>HUNGRY:</strong> El filósofo quiere comer</li>
           <li><strong>EATING:</strong> El filósofo está comiendo</li>
-          <li><strong>Priority:</strong> Número de prioridad (menor = mayor prioridad)</li>
+          <li><strong>Priority:</strong> Número de prioridad</li>
         </ul>
       </div>
     </div>
